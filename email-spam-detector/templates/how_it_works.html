@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import icon %}
+{% block title %}How It Works · Email Security Analyzer{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-head">
+        <h1 style="font-size:clamp(1.7rem,3.4vw,2.4rem)">How It Works</h1>
+        <p>A walk through the exact pipeline in this project, from the text you paste to the security report you download.</p>
+    </div>
+
+    <section class="section-sm">
+        <div class="pipeline" aria-label="Analysis pipeline">
+            {% set stages = [
+                ('Email input','Pasted text, a sample, or an uploaded .txt / .eml file (≤ 1 MB)',''),
+                ('Preprocessing','Lower-casing, tokenizing, removing English stop words','model'),
+                ('Feature extraction','TF-IDF vectors over single words and word pairs','model'),
+                ('Machine learning model','Multinomial Naive Bayes classifier','model'),
+                ('Prediction','Spam / not-spam probabilities → risk score','model'),
+                ('Risk analysis','Keyword, URL and formatting rules explain the result','rule'),
+                ('Security report','On-screen results and a downloadable PDF',''),
+            ] %}
+            {% for title, sub, kind in stages %}
+            <div class="pipe-step">
+                <div class="pipe-box {{ kind }}">{{ title }}<small>{{ sub }}</small></div>
+                {% if not loop.last %}<div class="pipe-arrow"></div>{% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        <p class="muted" style="text-align:center;font-size:.85rem;margin-top:16px">Solid highlighted boxes are the machine-learning steps. The dashed box is a separate, rule-based layer.</p>
+    </section>
+
+    <section class="section-sm">
+        <div class="grid-2">
+            <article class="card">
+                <h3>What the model does</h3>
+                <p class="muted">The model reads an email and estimates the probability that it is <strong>spam</strong> (unwanted, deceptive or bulk messages such as scams, fake prizes and phishing) versus <strong>not spam</strong> (a legitimate message). The class with the higher probability becomes the prediction.</p>
+                <p class="muted" style="margin:0">The algorithm is <strong>Multinomial Naive Bayes</strong> from scikit-learn, a classic, fast text classifier that learns which words are more common in spam than in legitimate messages.</p>
+            </article>
+            <article class="card">
+                <h3>What data it uses</h3>
+                <p class="muted">The model is trained on <code>spam.csv</code>, a labelled dataset of messages marked <em>spam</em> or <em>ham</em> (not spam).
+                {% if metrics %}It currently contains <strong>{{ metrics.dataset.total }}</strong> messages ({{ metrics.dataset.spam }} spam, {{ metrics.dataset.ham }} not spam), which gives the model a vocabulary of <strong>{{ metrics.dataset.vocabulary }}</strong> terms.{% endif %}</p>
+                <p class="muted" style="margin:0">This is a small demonstration dataset. Words the model has not seen are ignored, so a larger dataset would make predictions much more reliable. Replace <code>spam.csv</code> and run <code>python train_model.py</code> to retrain.</p>
+            </article>
+            <article class="card">
+                <h3>How preprocessing &amp; features work</h3>
+                <ul class="muted" style="margin:0;padding-left:20px">
+                    <li>Text is converted to lower case and split into words.</li>
+                    <li>Common English stop words (“the”, “and”, “is”…) are removed.</li>
+                    <li>Single words <em>and</em> two-word phrases (bigrams) are counted, up to 5,000 features.</li>
+                    <li><strong>TF-IDF</strong> weights each term: frequent in this email but rare across the dataset means more important.</li>
+                </ul>
+            </article>
+            <article class="card">
+                <h3>How prediction works</h3>
+                <p class="muted">For each class, Naive Bayes adds the class’s prior probability to the weighted log-likelihood of every term in the email, then converts the two scores into probabilities that sum to 100%.</p>
+                <div class="formula">score(class) = log P(class) + Σ tfidf(term) · log P(term | class)</div>
+                <p class="muted" style="margin:12px 0 0">The <strong>risk score</strong> is simply P(spam) × 100, rounded. Bands: <strong>0–30 Safe</strong>, <strong>31–60 Suspicious</strong>, <strong>61–100 High risk</strong>.</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="section-sm">
+        <article class="card">
+            <div class="card-title"><h3>Model vs. rule-based analysis</h3></div>
+            <div class="table-wrap"><table class="data">
+                <thead><tr><th>Part</th><th>Where it comes from</th><th>Used for</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="src-tag model">ML model</span></td><td>Trained TF-IDF + Naive Bayes model</td><td>Verdict, spam probability, confidence, risk score, “words that influenced the model”</td></tr>
+                    <tr><td><span class="src-tag">Rule-based</span></td><td>Keyword lists and link checks written in <code>services/heuristics.py</code></td><td>Highlighted keywords, URL assessments, detected indicators</td></tr>
+                    <tr><td><span class="src-tag">Heuristic</span></td><td>Simple 0–100 formulas over the rule-based findings</td><td>The spam risk breakdown bars</td></tr>
+                </tbody>
+            </table></div>
+            <p class="muted" style="margin:14px 0 0;font-size:.9rem">Rule-based results never change the model’s prediction. They exist to help a person understand an email. URL checks are not confirmed verdicts: links are never visited or looked up in a blocklist. “Confidence” is the probability of the predicted class (High ≥ 80%, Medium 60–79%, Low &lt; 60%).</p>
+        </article>
+    </section>
+
+    <section class="section-sm">{% include '_performance.html' %}</section>
+</div>
+{% endblock %}

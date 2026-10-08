@@ -1,0 +1,14 @@
+EMAIL SPAM DETECTOR
+Mini Project
+
+Purpose:
+Classify an email/message as SPAM or NOT SPAM.
+
+ML pipeline:
+TF-IDF Vectorization -> Multinomial Naive Bayes -> Prediction
+
+Frontend:
+HTML + CSS
+
+Backend:
+Python Flask

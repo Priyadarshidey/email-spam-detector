@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import icon %}
+{% block title %}Email Analyzer · Email Security Analyzer{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-head">
+        <h1 style="font-size:clamp(1.7rem,3.4vw,2.4rem)">Email Analyzer</h1>
+        <p>Paste an email, load a sample or upload a file. The trained model classifies it and the analysis below explains why.</p>
+    </div>
+
+    <div id="viewBanner" class="banner" hidden>
+        {{ icon('clock') }}<span id="viewBannerText"></span>
+        <a class="btn btn-secondary btn-sm" href="{{ url_for('history') }}">Back to history</a>
+    </div>
+
+    <div class="analyzer-grid">
+        <section class="card" aria-labelledby="inputTitle">
+            <div class="field-label">
+                <label for="emailInput" id="inputTitle">Email content</label>
+                <span class="muted">Plain text, or upload a .txt / .eml file</span>
+            </div>
+            <div class="textarea-wrap">
+                <textarea id="emailInput" class="email-input" maxlength="{{ max_chars }}" spellcheck="false"
+                    placeholder="Paste the email here, for example: Congratulations! You have won a free prize. Click here to claim it now…">{{ initial_message or '' }}</textarea>
+            </div>
+            <div class="input-foot">
+                <span><span id="charCounter">0</span> / {{ '{:,}'.format(max_chars) }} characters</span>
+                <span>Tip: you can also drag &amp; drop a file onto the box.</span>
+            </div>
+
+            <div class="actions">
+                <button class="btn btn-primary btn-lg" id="analyzeBtn" type="button">{{ icon('search') }} Analyze Email</button>
+                <button class="btn btn-secondary" id="clearBtn" type="button">{{ icon('x') }} Clear</button>
+                <button class="btn btn-secondary" id="sampleBtn" type="button">{{ icon('file') }} Load Sample</button>
+                <span class="spacer"></span>
+                <button class="btn btn-secondary" id="uploadBtn" type="button">{{ icon('upload') }} Upload .txt / .eml</button>
+                <input type="file" id="fileInput" accept=".txt,.eml,text/plain,message/rfc822" hidden>
+            </div>
+
+            <div class="samples" id="samples">
+                <div class="field-label"><span>Try a sample</span><span class="muted">Click one, then press Analyze</span></div>
+                <div class="chips" id="sampleChips" role="group" aria-label="Sample emails"></div>
+            </div>
+        </section>
+
+        <aside class="card" aria-labelledby="statsTitle">
+            <div class="card-title">
+                <h3 id="statsTitle">Live email statistics</h3>
+                <span class="src-tag">Updates as you type</span>
+            </div>
+            <div class="stats-grid" id="statsGrid">
+                {% for key, label in [('characters','Characters'),('words','Words'),('sentences','Sentences'),('urls','URLs'),('suspicious_keywords','Suspicious keywords'),('capital_letters','Capital letters'),('special_characters','Special characters'),('exclamation_marks','Exclamation marks')] %}
+                <div class="stat" data-stat="{{ key }}"><b>0</b><span>{{ label }}</span></div>
+                {% endfor %}
+            </div>
+            <p class="stats-note">Statistics are simple counts. They are not model output.</p>
+        </aside>
+    </div>
+
+    <section class="card loading" id="loading" hidden aria-live="polite">
+        <div class="card-title"><h3 id="loadingTitle">Analyzing email…</h3><span class="src-tag">Scanning</span></div>
+        <div class="loading-bar"><i id="loadingBar"></i></div>
+        <ul class="scan-steps" id="scanSteps">
+            {% for step in ['Processing email content','Extracting features','Checking suspicious patterns','Running ML model','Generating security score'] %}
+            <li><span class="tick">{{ icon('tick') }}</span>{{ step }}</li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <div class="results" id="results" hidden>
+        <!-- main result -->
+        <section class="result-card" id="resultCard" aria-live="polite">
+            <div>
+                <div class="verdict">
+                    <div class="verdict-icon" id="verdictIcon"></div>
+                    <div><h2 id="verdictTitle"></h2><p id="verdictSub"></p></div>
+                </div>
+                <div class="result-metrics">
+                    <div class="metric-pill"><b id="mSpam">–</b><span>Spam probability</span></div>
+                    <div class="metric-pill"><b id="mConf">–</b><span>Model confidence</span></div>
+                    <div class="metric-pill"><b id="mPred">–</b><span>Model prediction</span></div>
+                </div>
+                <div class="result-actions">
+                    <button class="btn btn-primary" id="reportBtn" type="button">{{ icon('download') }} Download Report</button>
+                    <button class="btn btn-secondary" id="analyzeAnotherBtn" type="button">{{ icon('mail') }} Analyze another</button>
+                </div>
+            </div>
+            <div class="ring" id="ring" aria-label="Spam probability">
+                <svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="52"/><circle class="fill" id="ringFill" cx="60" cy="60" r="52"/></svg>
+                <div class="ring-label"><b id="ringValue">0%</b><span>SPAM</span></div>
+            </div>
+        </section>
+
+        <div class="grid-2">
+            <!-- risk meter -->
+            <section class="card">
+                <div class="card-title"><h3>Risk meter</h3><span class="src-tag model">ML model</span></div>
+                <div class="meter">
+                    <div class="meter-top">
+                        <div class="meter-score"><span id="meterScore">0</span><small> / 100</small></div>
+                        <span class="badge" id="meterBadge"></span>
+                    </div>
+                    <div class="meter-track" id="meterTrack">
+                        <div class="meter-mask"></div>
+                        <div class="meter-marker" id="meterMarker"></div>
+                    </div>
+                    <div class="meter-scale"><span class="z-safe">SAFE</span><span class="z-danger">DANGEROUS</span></div>
+                    <div class="meter-zones"><span>0–30 Safe</span><span>31–60 Suspicious</span><span>61–100 High risk</span></div>
+                </div>
+                <p class="note" style="margin-top:16px">Risk score = the model's spam probability, rounded.</p>
+            </section>
+
+            <!-- probabilities -->
+            <section class="card">
+                <div class="card-title"><h3>Model probabilities</h3><span class="src-tag model">ML model</span></div>
+                <div class="prob-row">
+                    <div class="prob"><div class="prob-head"><span>Spam</span><span id="pSpamTxt"></span></div><div class="bar"><i id="pSpamBar" style="--bar-color:var(--danger)"></i></div></div>
+                    <div class="prob"><div class="prob-head"><span>Not spam</span><span id="pHamTxt"></span></div><div class="bar"><i id="pHamBar" style="--bar-color:var(--safe)"></i></div></div>
+                </div>
+                <p class="note" id="recommendation" style="margin-top:16px"></p>
+            </section>
+        </div>
+
+        <!-- why -->
+        <section class="expander" id="why">
+            <button class="expander-btn" id="whyBtn" type="button" aria-expanded="false" aria-controls="whyBody">
+                {{ icon('info') }} Why this result? {{ icon('chevron', 'chev') }}
+            </button>
+            <div class="expander-body" id="whyBody">
+                <div class="expander-inner"><div>
+                    <div>
+                        <div class="subhead">Words that influenced the model <span class="src-tag model">ML model</span></div>
+                        <div class="term-cols">
+                            <div class="term-col"><h4>Pushed towards SPAM</h4><div class="term-list" id="termsSpam"></div></div>
+                            <div class="term-col"><h4>Pushed towards NOT SPAM</h4><div class="term-list" id="termsHam"></div></div>
+                        </div>
+                        <p class="note" id="coverageNote" style="margin-top:12px"></p>
+                    </div>
+                    <div>
+                        <div class="subhead">Detected indicators <span class="src-tag">Rule-based</span></div>
+                        <ul class="indicator-list" id="indicators"></ul>
+                    </div>
+                </div></div>
+            </div>
+        </section>
+
+        <!-- highlights -->
+        <section class="card">
+            <div class="card-title"><h3>Suspicious keyword highlighting</h3><span class="src-tag">Rule-based</span></div>
+            <div class="legend">
+                <span><i class="dot high"></i>High risk</span>
+                <span><i class="dot medium"></i>Suspicious</span>
+                <span><i class="dot safe"></i>Normal (unhighlighted text, safe-looking links)</span>
+            </div>
+            <div class="email-view" id="emailView"></div>
+            <div class="kw-chips" id="kwChips"></div>
+        </section>
+
+        <!-- urls -->
+        <section class="card">
+            <div class="card-title"><h3>URL analysis</h3><span class="src-tag">Rule-based</span></div>
+            <div id="urlBody"></div>
+        </section>
+
+        <!-- breakdown -->
+        <section class="card">
+            <div class="card-title"><h3>Spam risk breakdown</h3><span class="src-tag">Heuristic</span></div>
+            <div class="breakdown" id="breakdown"></div>
+            <div class="provenance">
+                <div class="prov"><b>Model prediction</b>Spam probability, risk score and confidence come from the trained Naive Bayes model.</div>
+                <div class="prov"><b>Rule-based indicators</b>Keyword lists, link checks and formatting rules, shown only when detected.</div>
+                <div class="prov"><b>Heuristic analysis</b>The breakdown bars are simple 0–100 rule scores to help explain the result. They are not model outputs.</div>
+            </div>
+        </section>
+    </div>
+
+    <p class="note" style="margin-top:28px">This tool provides automated analysis for educational and informational purposes. It should not be considered a definitive security verdict.</p>
+</div>
+
+<script type="application/json" id="esaConfig">{{ client_config | tojson }}</script>
+{% if initial_message %}<script>window.ESA_AUTORUN = true;</script>{% endif %}
+{% if initial_error %}<script>window.ESA_INITIAL_ERROR = {{ initial_error | tojson }};</script>{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/samples.js') }}"></script>
+<script src="{{ url_for('static', filename='js/analyzer.js') }}"></script>
+{% endblock %}

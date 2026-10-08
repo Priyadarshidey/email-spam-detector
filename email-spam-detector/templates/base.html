@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Email Security Analyzer{% endblock %}</title>
+    <meta name="description" content="Detect spam, phishing attempts, suspicious links and risky email patterns using machine learning.">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234f46e5'/%3E%3Cpath d='M16 6l8 3v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V9z' fill='none' stroke='white' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M12.5 16l2.5 2.5 4.5-5' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+    {# Set the theme and sidebar state before first paint to avoid a flash. #}
+    <script>
+        (function () {
+            var root = document.documentElement, theme = null, sidebar = null;
+            try { theme = localStorage.getItem('esa.theme'); sidebar = localStorage.getItem('esa.sidebar'); } catch (e) {}
+            if (theme !== 'light' && theme !== 'dark') {
+                theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+            root.setAttribute('data-theme', theme);
+            // Saved choice wins; otherwise tablet widths start as an icon rail.
+            if (sidebar !== 'collapsed' && sidebar !== 'expanded') {
+                sidebar = window.matchMedia && window.matchMedia('(min-width: 921px) and (max-width: 1100px)').matches ? 'collapsed' : 'expanded';
+            }
+            root.setAttribute('data-sidebar', sidebar);
+        })();
+    </script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+{% include '_icons.html' %}
+{% from '_macros.html' import icon %}
+
+{# Sidebar groups: (label, [(endpoint, in-page anchor or None, active key, label, icon), ...]).
+   Entries with an anchor point at a section of an existing page; core.js highlights them from the URL hash. #}
+{% set nav_groups = [
+    ('Main', [
+        ('home', None, 'home', 'Home', 'home'),
+        ('analyzer', None, 'analyzer', 'Email Analyzer', 'search'),
+        ('dashboard', None, 'dashboard', 'Dashboard', 'grid'),
+        ('history', None, 'history', 'Analysis History', 'clock'),
+    ]),
+    ('Analysis', [
+        ('analyzer', 'samples', 'analyzer', 'Sample Emails', 'flask'),
+        ('dashboard', 'performance', 'dashboard', 'Model Performance', 'trending'),
+    ]),
+    ('Information', [
+        ('how_it_works', None, 'how', 'How It Works', 'settings'),
+        ('about', None, 'about', 'About', 'info'),
+    ]),
+] %}
+
+<header class="site-header" id="siteHeader">
+    <div class="nav-inner">
+        <button class="icon-btn" id="sidebarToggle" type="button" aria-label="Toggle navigation" aria-expanded="true" aria-controls="sidebar">{{ icon('menu') }}</button>
+        <a class="brand" href="{{ url_for('home') }}" aria-label="Email Security Analyzer home">
+            <span class="brand-mark">{{ icon('shield-check') }}</span>
+            <span class="brand-text"><span class="brand-name">Email Security <strong>Analyzer</strong></span><small class="brand-tag">AI-powered threat detection</small></span>
+        </a>
+
+        <div class="nav-actions">
+            <div class="sys-status" id="sysStatus" data-state="ok" role="status" title="Server health check passed">
+                <span class="sys-dot" aria-hidden="true"></span><span class="sys-text">System Secure</span>
+            </div>
+            <div class="user-chip" title="Signed in as Admin">
+                <span class="user-avatar">{{ icon('user') }}</span><span class="user-name">Admin</span>
+            </div>
+            <button class="icon-btn" id="themeToggle" type="button" aria-label="Toggle dark / light mode" title="Toggle theme">
+                <span class="theme-sun">{{ icon('sun') }}</span><span class="theme-moon">{{ icon('moon') }}</span>
+            </button>
+        </div>
+    </div>
+</header>
+
+<aside class="sidebar" id="sidebar" aria-label="Sidebar" data-host="{{ active }}">
+    <nav class="sb-nav" aria-label="Main">
+        {% for group, items in nav_groups %}
+        <p class="sb-section">{{ group }}</p>
+        <ul>
+            {% for endpoint, anchor, key, label, icon_name in items %}
+            {% set is_active = (active == key and not anchor) %}
+            <li>
+                <a class="sb-link{% if is_active %} active{% endif %}"
+                   href="{{ url_for(endpoint) }}{% if anchor %}#{{ anchor }}{% endif %}"
+                   data-label="{{ label }}" data-host="{{ key }}"{% if anchor %} data-anchor="#{{ anchor }}"{% endif %}{% if is_active %} aria-current="page"{% endif %}>
+                    <span class="sb-icon">{{ icon(icon_name) }}</span>
+                    <span class="sb-label">{{ label }}</span>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+        {% endfor %}
+    </nav>
+
+    <div class="sb-foot">
+        <div class="sb-meta">
+            <span class="sb-icon">{{ icon('cpu') }}</span>
+            <span class="sb-label"><b>Detection engine</b>TF-IDF + Naive Bayes</span>
+        </div>
+        <button class="sb-link sb-collapse" id="sidebarCollapse" type="button" aria-controls="sidebar" aria-label="Collapse sidebar" data-label="Expand sidebar">
+            <span class="sb-icon sb-chevrons">{{ icon('panel') }}</span>
+            <span class="sb-label">Collapse</span>
+        </button>
+    </div>
+</aside>
+<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+<div class="app-main">
+
+<main id="main" class="page">
+    {% block content %}{% endblock %}
+</main>
+
+<footer class="site-footer">
+    <div class="container footer-grid">
+        <div class="footer-about">
+            <a class="brand" href="{{ url_for('home') }}">
+                <span class="brand-mark">{{ icon('shield-check') }}</span>
+                <span class="brand-text">Email Security <strong>Analyzer</strong></span>
+            </a>
+            <p>Machine-learning powered spam and phishing analysis with explainable, rule-based security insights.</p>
+        </div>
+        <div>
+            <h4>Navigate</h4>
+            <ul>
+                <li><a href="{{ url_for('analyzer') }}">Email Analyzer</a></li>
+                <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('history') }}">Analysis History</a></li>
+                <li><a href="{{ url_for('how_it_works') }}">How It Works</a></li>
+                <li><a href="{{ url_for('about') }}">About</a></li>
+            </ul>
+        </div>
+        <div>
+            <h4>Built with</h4>
+            <ul class="plain">
+                <li>Python &amp; Flask</li>
+                <li>scikit-learn (TF-IDF + Naive Bayes)</li>
+                <li>Chart.js &middot; ReportLab</li>
+                <li>HTML, CSS &amp; vanilla JavaScript</li>
+            </ul>
+        </div>
+    </div>
+    <div class="container footer-bottom">
+        <p class="disclaimer">{{ icon('info') }} This tool provides automated analysis for educational and informational purposes. It should not be considered a definitive security verdict.</p>
+        <p>&copy; <span id="year">2026</span> Email Security Analyzer &middot; College PBL Project</p>
+    </div>
+</footer>
+</div>
+
+<div class="toast-region" id="toastRegion" role="status" aria-live="polite"></div>
+
+<script src="{{ url_for('static', filename='js/core.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

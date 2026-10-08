@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import icon %}
+{% block title %}Email Security Analyzer · AI-Powered Spam &amp; Phishing Detection{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div class="container hero-grid">
+        <div>
+            <span class="eyebrow">{{ icon('cpu') }} Machine learning · Explainable results</span>
+            <h1>AI-Powered <span class="grad">Email Security</span> Analyzer</h1>
+            <p class="lead">Detect spam, phishing attempts, suspicious links, and risky email patterns using machine learning.</p>
+            <div class="hero-cta">
+                <a class="btn btn-primary btn-lg" href="{{ url_for('analyzer') }}">{{ icon('search') }} Analyze an Email</a>
+                <a class="btn btn-secondary btn-lg" href="{{ url_for('how_it_works') }}">How it works</a>
+            </div>
+            <div class="hero-trust">
+                <span>{{ icon('tick') }} Real trained model</span>
+                <span>{{ icon('tick') }} Transparent rule-based checks</span>
+                <span>{{ icon('tick') }} Downloadable PDF report</span>
+            </div>
+        </div>
+        <div class="card scan-card" aria-hidden="true">
+            <div class="scan-head">{{ icon('mail') }} Incoming email · scanning</div>
+            <div class="scan-lines"><i></i><i class="hl"></i><i></i><i class="hl2"></i><i></i></div>
+            <div class="pipe-mini">
+                <div>{{ icon('layers') }} Extract features</div>
+                <div>{{ icon('cpu') }} Run ML classifier</div>
+                <div>{{ icon('target') }} Score the risk</div>
+                <div>{{ icon('file') }} Explain &amp; report</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <div class="section-head center">
+            <h2>Everything you need to assess an email</h2>
+            <p>One analysis gives you a verdict, a risk score, and a clear explanation of what influenced it.</p>
+        </div>
+        <div class="grid-3">
+            {% set features = [
+                ('mail','Spam Detection','Classifies an email as spam or not spam and shows the model’s probability for each.'),
+                ('alert','Phishing Detection','Flags account-verification tricks, urgency pressure, and credential-harvesting language.'),
+                ('target','Risk Analysis','Turns the model’s probability into a 0–100 risk score with Safe, Suspicious and High-risk bands.'),
+                ('cpu','ML-Powered Classification','TF-IDF features and a Multinomial Naive Bayes classifier trained on labelled messages.'),
+                ('shield-check','Security Insights','See highlighted keywords, link checks and the words that influenced the model.'),
+                ('file','Detailed Reports','Download a clean PDF report with the verdict, indicators, URLs and a recommendation.'),
+            ] %}
+            {% for ic, title, text in features %}
+            <article class="card feature hoverable">
+                <div class="f-icon">{{ icon(ic) }}</div>
+                <h3>{{ title }}</h3>
+                <p>{{ text }}</p>
+            </article>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="section" style="padding-top:8px">
+    <div class="container">
+        <div class="section-head">
+            <h2>How the system works</h2>
+            <p>Your email passes through a short pipeline. The prediction always comes from the model; extra checks only explain it.</p>
+        </div>
+        <div class="steps">
+            <div class="step"><h3>Paste or upload</h3><p>Enter email text, pick a sample, or upload a .txt / .eml file.</p></div>
+            <div class="step"><h3>Extract features</h3><p>Text is cleaned and converted to TF-IDF numbers the model understands.</p></div>
+            <div class="step"><h3>Classify</h3><p>The Naive Bayes model outputs a spam probability for the email.</p></div>
+            <div class="step"><h3>Explain</h3><p>Keywords, links and formatting are checked to show why it looks risky.</p></div>
+        </div>
+    </div>
+</section>
+
+<section class="section" style="padding-top:8px">
+    <div class="container">
+        <div class="cta-band">
+            <h2>Check an email in seconds</h2>
+            <p>Try a built-in sample or paste your own message to see the full analysis.</p>
+            <a class="btn btn-lg" href="{{ url_for('analyzer') }}">Analyze an Email {{ icon('arrow') }}</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

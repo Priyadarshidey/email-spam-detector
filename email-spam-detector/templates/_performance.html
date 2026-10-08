@@ -1,0 +1,75 @@
+{# Model performance block. Needs `metrics` (from model/metrics.json) and `info`. All numbers come from train_model.py. #}
+{% from '_macros.html' import icon %}
+<section class="card" id="performance">
+    <div class="card-title">
+        <div>
+            <h2 style="font-size:1.3rem;margin:0">Model performance</h2>
+            <p class="muted" style="margin:4px 0 0;font-size:.9rem">{{ info.algorithm }} · {{ info.vectorizer }}</p>
+        </div>
+        {% if metrics %}
+        <div class="segmented" role="group" aria-label="Evaluation method">
+            <button type="button" data-eval="cross_validation" aria-pressed="true">{{ metrics.cross_validation.folds }}-fold cross-validation</button>
+            <button type="button" data-eval="holdout" aria-pressed="false">Hold-out test</button>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if not metrics %}
+    <p class="note warn">No evaluation metrics found. Run <code>python train_model.py</code> to generate <code>model/metrics.json</code>.</p>
+    {% else %}
+    <div class="perf-grid" id="perfGrid">
+        {% for key, label in [('accuracy','Accuracy'),('precision','Precision'),('recall','Recall'),('f1','F1 score')] %}
+        <div class="perf-metric"><b data-metric="{{ key }}">–</b><span>{{ label }}</span></div>
+        {% endfor %}
+    </div>
+    <div class="grid-2" style="margin-top:20px;align-items:center">
+        <div>
+            <div class="subhead">Confusion matrix <span class="muted" style="font-weight:500" id="cmSupport"></span></div>
+            <div class="cm" id="cmGrid">
+                <span></span><span class="h">Predicted<br>not spam</span><span class="h">Predicted<br>spam</span>
+                <span class="h">Actually<br>not spam</span><div class="c good" data-cm="tn"></div><div class="c bad" data-cm="fp"></div>
+                <span class="h">Actually<br>spam</span><div class="c bad" data-cm="fn"></div><div class="c good" data-cm="tp"></div>
+            </div>
+        </div>
+        <div>
+            <div class="subhead">Training data</div>
+            <div class="ds-grid">
+                <div class="stat"><b>{{ metrics.dataset.total }}</b><span>Labelled messages</span></div>
+                <div class="stat"><b>{{ metrics.dataset.spam }} / {{ metrics.dataset.ham }}</b><span>Spam / not spam</span></div>
+                <div class="stat"><b>{{ metrics.dataset.vocabulary }}</b><span>Vocabulary terms</span></div>
+                <div class="stat"><b>{{ metrics.dataset.train }} / {{ metrics.dataset.test }}</b><span>Train / test split</span></div>
+            </div>
+        </div>
+    </div>
+    <p class="note {% if metrics.dataset.total < 1000 %}warn{% endif %}" style="margin-top:18px">
+        Spam is the positive class. Cross-validation tests every message once; the hold-out test uses {{ metrics.dataset.test }} unseen messages.
+        {% if metrics.dataset.total < 1000 %}
+        <strong>The dataset has only {{ metrics.dataset.total }} messages, so these figures are indicative, not reliable.</strong>
+        Retraining on a larger dataset (for example the full SMS Spam Collection) would give far more trustworthy numbers.
+        {% endif %}
+        This project trains one algorithm, so there is no model comparison table.
+    </p>
+    <script type="application/json" id="metricsData">{{ metrics | tojson }}</script>
+    <script>
+    (function () {
+        var data = JSON.parse(document.getElementById('metricsData').textContent);
+        var buttons = document.querySelectorAll('#performance [data-eval]');
+        function show(kind) {
+            var m = data[kind];
+            ['accuracy', 'precision', 'recall', 'f1'].forEach(function (k) {
+                document.querySelector('[data-metric="' + k + '"]').textContent = m[k].toFixed(1) + '%';
+            });
+            ['tn', 'fp', 'fn', 'tp'].forEach(function (k) {
+                var cell = document.querySelector('[data-cm="' + k + '"]');
+                var labels = { tn: 'true negative', fp: 'false positive', fn: 'false negative', tp: 'true positive' };
+                cell.innerHTML = m.confusion_matrix[k] + '<small>' + labels[k] + '</small>';
+            });
+            document.getElementById('cmSupport').textContent = '(' + m.support + ' messages)';
+            buttons.forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.eval === kind)); });
+        }
+        buttons.forEach(function (b) { b.addEventListener('click', function () { show(b.dataset.eval); }); });
+        show('cross_validation');
+    })();
+    </script>
+    {% endif %}
+</section>

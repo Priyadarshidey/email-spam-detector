@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import icon %}
+{% block title %}Dashboard · Email Security Analyzer{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-head">
+        <h1 style="font-size:clamp(1.7rem,3.4vw,2.4rem)">Dashboard</h1>
+        <p>Overview of the emails you have analyzed in this browser, plus the model's evaluation results.</p>
+    </div>
+
+    <div id="dashEmpty" class="card empty" hidden style="margin-top:16px">
+        <div class="empty-icon">{{ icon('chart') }}</div>
+        <h2>No analyses yet</h2>
+        <p>Analyze your first email and the charts below will fill in with your results.</p>
+        <p><a class="btn btn-primary" href="{{ url_for('analyzer') }}">Analyze Email {{ icon('arrow') }}</a></p>
+    </div>
+
+    <div id="dashData" hidden>
+        <div class="grid-5" id="kpis" style="margin-top:16px"></div>
+
+        <div class="grid-2" style="margin-top:20px">
+            <section class="card"><div class="card-title"><h3>Spam vs safe</h3></div><div class="chart-box"><canvas id="chartSplit" role="img" aria-label="Spam, suspicious and safe email counts"></canvas></div></section>
+            <section class="card"><div class="card-title"><h3>Detection over time</h3></div><div class="chart-box"><canvas id="chartTime" role="img" aria-label="Emails analyzed per day by result"></canvas></div></section>
+            <section class="card"><div class="card-title"><h3>Risk distribution</h3></div><div class="chart-box"><canvas id="chartRisk" role="img" aria-label="Distribution of risk scores"></canvas></div></section>
+            <section class="card"><div class="card-title"><h3>Detection categories</h3><span class="src-tag">Rule-based</span></div><div class="chart-box"><canvas id="chartCats" role="img" aria-label="How often each indicator was detected"></canvas></div></section>
+        </div>
+
+        <section class="card" style="margin-top:20px">
+            <div class="card-title"><h3>Recent analysis results</h3><a class="btn btn-secondary btn-sm" href="{{ url_for('history') }}">View all</a></div>
+            <div class="recent" id="recent"></div>
+        </section>
+    </div>
+
+    <div style="margin-top:20px">{% include '_performance.html' %}</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='vendor/chart.umd.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

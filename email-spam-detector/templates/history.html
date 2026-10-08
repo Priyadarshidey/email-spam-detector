@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import icon %}
+{% block title %}Analysis History · Email Security Analyzer{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-head">
+        <h1 style="font-size:clamp(1.7rem,3.4vw,2.4rem)">Analysis History</h1>
+        <p>Your previous analyses. History is stored in this browser only (localStorage) and is never sent to a server.</p>
+    </div>
+
+    <div id="histEmpty" class="card empty" hidden style="margin-top:16px">
+        <div class="empty-icon">{{ icon('inbox') }}</div>
+        <h2>No analysis history yet</h2>
+        <p>Analyze your first email to see it here.</p>
+        <p><a class="btn btn-primary" href="{{ url_for('analyzer') }}">Analyze Email {{ icon('arrow') }}</a></p>
+    </div>
+
+    <div id="histData" hidden style="margin-top:16px">
+        <div class="toolbar">
+            <label class="search"><span class="sr-only">Search history</span>{{ icon('search') }}<input type="search" id="histSearch" placeholder="Search emails…" autocomplete="off"></label>
+            <div class="chips" id="histFilters" role="group" aria-label="Filter by result">
+                <button type="button" class="chip" data-filter="all" aria-pressed="true">All</button>
+                <button type="button" class="chip" data-filter="high" aria-pressed="false">Spam</button>
+                <button type="button" class="chip" data-filter="safe" aria-pressed="false">Safe</button>
+                <button type="button" class="chip" data-filter="suspicious" aria-pressed="false">Suspicious</button>
+            </div>
+            <button class="btn btn-danger btn-sm" id="clearAll" type="button">{{ icon('trash') }} Clear all</button>
+        </div>
+
+        <div class="table-wrap">
+            <table class="data stack">
+                <thead><tr><th>Date</th><th>Email</th><th>Result</th><th>Risk</th><th>Probability</th><th></th></tr></thead>
+                <tbody id="histBody"></tbody>
+            </table>
+        </div>
+        <p class="muted" id="histCount" style="font-size:.85rem;margin-top:10px"></p>
+        <div id="histNoMatch" class="card empty" hidden>
+            <div class="empty-icon">{{ icon('search') }}</div>
+            <h3>No matching analyses</h3><p>Try a different search or filter.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}<script src="{{ url_for('static', filename='js/history.js') }}"></script>{% endblock %}

@@ -1,0 +1,41 @@
+{
+  "algorithm": "Multinomial Naive Bayes",
+  "vectorizer": "TF-IDF (unigrams + bigrams, English stop words, max 5000 features)",
+  "trained_at": "2026-10-08T20:01:14+00:00",
+  "sklearn_version": "1.9.1",
+  "dataset": {
+    "total": 30,
+    "spam": 13,
+    "ham": 17,
+    "train": 24,
+    "test": 6,
+    "vocabulary": 167
+  },
+  "holdout": {
+    "accuracy": 83.33,
+    "precision": 50.0,
+    "recall": 100.0,
+    "f1": 66.67,
+    "support": 6,
+    "confusion_matrix": {
+      "tn": 4,
+      "fp": 1,
+      "fn": 0,
+      "tp": 1
+    }
+  },
+  "cross_validation": {
+    "accuracy": 86.67,
+    "precision": 90.91,
+    "recall": 76.92,
+    "f1": 83.33,
+    "folds": 5,
+    "support": 30,
+    "confusion_matrix": {
+      "tn": 16,
+      "fp": 1,
+      "fn": 3,
+      "tp": 10
+    }
+  }
+}

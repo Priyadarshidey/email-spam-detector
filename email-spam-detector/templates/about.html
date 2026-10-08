@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import icon %}
+{% block title %}About · Email Security Analyzer{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-head">
+        <h1 style="font-size:clamp(1.7rem,3.4vw,2.4rem)">About the project</h1>
+        <p>An AI-powered Email Security Analyzer built as a college Project-Based Learning (PBL) assignment.</p>
+    </div>
+
+    <section class="section-sm">
+        <div class="grid-2">
+            <article class="card"><h3>Project objective</h3>
+                <p class="muted" style="margin:0">To build a web application that uses machine learning to classify emails as spam or not spam, and to explain every result clearly enough that a non-expert can understand why an email looks risky.</p></article>
+            <article class="card"><h3>Problem being solved</h3>
+                <p class="muted" style="margin:0">Spam and phishing emails waste time and trick people into sharing passwords, money or personal details. A plain “spam / not spam” label is hard to trust, so this project adds a risk score, highlighted evidence, link checks and a downloadable report.</p></article>
+            <article class="card"><h3>Machine learning approach</h3>
+                <p class="muted" style="margin:0">Text is converted to <strong>TF-IDF</strong> features (words and word pairs) and classified by a <strong>Multinomial Naive Bayes</strong> model trained on labelled spam / not-spam messages. See <a href="{{ url_for('how_it_works') }}">How It Works</a> for details and evaluation results.</p></article>
+            <article class="card"><h3>Key features</h3>
+                <ul class="muted" style="margin:0;padding-left:20px">
+                    <li>Real-time email statistics and sample emails</li>
+                    <li>Spam probability, confidence and a 0–100 risk meter</li>
+                    <li>“Why this result?” explanations and keyword highlighting</li>
+                    <li>URL analysis, .txt / .eml upload, PDF report</li>
+                    <li>Dashboard, searchable history, dark / light mode</li>
+                </ul></article>
+        </div>
+    </section>
+
+    <section class="section-sm">
+        <article class="card">
+            <h3>Technology used</h3>
+            <div class="tech-list">
+                <span>Python</span><span>Flask</span><span>scikit-learn</span><span>pandas</span><span>TF-IDF</span><span>Multinomial Naive Bayes</span>
+                <span>ReportLab (PDF)</span><span>Chart.js</span><span>HTML5 &amp; CSS3</span><span>Vanilla JavaScript</span>
+            </div>
+        </article>
+    </section>
+
+    <section class="section-sm">
+        <article class="card">
+            <h3>Team &amp; project information</h3>
+            {# Edit this table with your own details before presenting. #}
+            <table class="table-simple">
+                <tr><th>Project title</th><td>Email Spam Detector / Email Security Analyzer</td></tr>
+                <tr><th>Course / type</th><td>Project-Based Learning (PBL)</td></tr>
+                <tr><th>Team members</th><td>Add your name(s) here</td></tr>
+                <tr><th>Guide / institution</th><td>Add your guide and college here</td></tr>
+            </table>
+        </article>
+    </section>
+
+    <p class="note" style="margin:8px 0 0">This tool provides automated analysis for educational and informational purposes. It should not be considered a definitive security verdict.</p>
+</div>
+{% endblock %}
